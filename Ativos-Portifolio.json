@@ -1,0 +1,153 @@
+{
+  "ativos": [
+    {
+      "nome": "Petrobrás",
+      "tipo": "acao",
+      "quantidade": 45,
+      "preco_medio": 43.53,
+      "aporte_mensal": 0,
+      "taxa": null,
+      "indexador": null,
+      "vencimento": null
+    },
+    {
+      "nome": "Vale",
+      "tipo": "acao",
+      "quantidade": 84,
+      "preco_medio": 82.68,
+      "aporte_mensal": 0,
+      "taxa": null,
+      "indexador": null,
+      "vencimento": null
+    },
+    {
+      "nome": "Banco_do_Brasil",
+      "tipo": "acao",
+      "quantidade": 100,
+      "preco_medio": 21.13,
+      "aporte_mensal": 0,
+      "taxa": null,
+      "indexador": null,
+      "vencimento": null
+    },
+    {
+      "nome": "KNCR11",
+      "tipo": "fundo",
+      "quantidade": 30,
+      "preco_medio": 105.62,
+      "aporte_mensal": 0,
+      "taxa": 20,
+      "indexador": null,
+      "vencimento": "26/06/2029"
+    },
+    {
+      "nome": "KNIP11",
+      "tipo": "fundo",
+      "quantidade": 20,
+      "preco_medio": 92.02,
+      "aporte_mensal": 1000,
+      "taxa": 20,
+      "indexador": null,
+      "vencimento": "26/06/2029"
+    },
+    {
+      "nome": "SNEL11",
+      "tipo": "fundo",
+      "quantidade": 150,
+      "preco_medio": 8.48,
+      "aporte_mensal": 100,
+      "taxa": 15,
+      "indexador": null,
+      "vencimento": "26/06/2029"
+    },
+    {
+      "nome": "Banco_Nubank",
+      "tipo": "renda_fixa",
+      "quantidade": 10,
+      "preco_medio": 1000,
+      "aporte_mensal": 0,
+      "taxa": 110,
+      "indexador": "CDI",
+      "vencimento": "26/02/2030"
+    },
+    {
+      "nome": "Banco_BMG",
+      "tipo": "renda_fixa",
+      "quantidade": 60,
+      "preco_medio": 100,
+      "aporte_mensal": 0,
+      "taxa": 107,
+      "indexador": "SELIC",
+      "vencimento": "26/02/2030"
+    },
+    {
+      "nome": "Banco_PAN",
+      "tipo": "renda_fixa",
+      "quantidade": 20,
+      "preco_medio": 1000,
+      "aporte_mensal": 0,
+      "taxa": 102,
+      "indexador": "CDI",
+      "vencimento": "26/02/2030"
+    },
+    {
+      "nome": "B3",
+      "tipo": "acao",
+      "quantidade": 150,
+      "preco_medio": 17.4,
+      "aporte_mensal": 0,
+      "taxa": null,
+      "indexador": null,
+      "vencimento": null
+    },
+    {
+      "nome": "BB_Seguridade",
+      "tipo": "acao",
+      "quantidade": 42,
+      "preco_medio": 34.72,
+      "aporte_mensal": 0,
+      "taxa": null,
+      "indexador": null,
+      "vencimento": null
+    },
+    {
+      "nome": "raizen",
+      "tipo": "acao",
+      "quantidade": 20,
+      "preco_medio": 0.4,
+      "aporte_mensal": 0,
+      "taxa": null,
+      "indexador": null,
+      "vencimento": null
+    }
+  ],
+  "portfolios": [
+    {
+      "nome": "carteira_conservadora",
+      "ativos": [
+        "Banco_do_Brasil",
+        "KNCR11",
+        "Banco_Nubank"
+      ]
+    },
+    {
+      "nome": "reserva_emergencial",
+      "ativos": [
+        "KNIP11",
+        "SNEL11",
+        "Banco_BMG",
+        "Banco_PAN"
+      ]
+    },
+    {
+      "nome": "carteira_de_risco",
+      "ativos": [
+        "Petrobrás",
+        "Vale",
+        "B3",
+        "BB_Seguridade",
+        "raizen"
+      ]
+    }
+  ]
+}

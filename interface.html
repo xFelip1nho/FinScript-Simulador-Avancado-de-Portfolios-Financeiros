@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinScript — Painel Financeiro Avançado</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --verde:      #1D9E75;
+      --verde-dark: #0F6E56;
+      --verde-bg:   #14231e;
+      --texto:      #f3f4f6;
+      --texto-sec:  #9ca3af;
+      --texto-ter:  #4b5563;
+      --borda:      rgba(255,255,255,0.08);
+      --surface:    #16161a;
+      --bg:         #0f0f11;
+      --perigo:     #ef4444;
+      --azul:       #3b82f6;
+      --alerta:     #f59e0b;
+      --radius-md:  8px;
+      --radius-lg:  12px;
+      --mono:       'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--texto); min-height: 100vh; }
+
+    /* HEADER */
+    .header { background: var(--surface); border-bottom: 1px solid var(--borda); padding: 1rem 2rem; display: flex; align-items: center; gap: 12px; }
+    .logo { width: 36px; height: 36px; background: var(--verde); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .logo i { font-size: 20px; color: #fff; }
+    .header-text h1 { font-size: 18px; font-weight: 600; color: #fff; }
+    .header-text p  { font-size: 12px; color: var(--texto-sec); }
+
+    /* LAYOUT */
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 65px); }
+
+    /* SIDEBAR */
+    .sidebar { background: var(--surface); border-right: 1px solid var(--borda); padding: 1.5rem 1rem; }
+    .nav-label { font-size: 10px; font-weight: 600; color: var(--texto-ter); text-transform: uppercase; letter-spacing: .08em; margin: 1rem 0 .5rem .5rem; }
+    .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: var(--radius-md); border: none; background: none; font-size: 14px; color: var(--texto-sec); cursor: pointer; text-align: left; margin-bottom: 2px; transition: .15s; }
+    .nav-btn i { font-size: 18px; }
+    .nav-btn:hover  { background: var(--bg); color: var(--texto); }
+    .nav-btn.active { background: var(--verde-bg); color: var(--verde); font-weight: 500; border: 1px solid rgba(29, 158, 117, 0.2); }
+
+    /* MAIN CONTENT */
+    .main { padding: 2rem; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 20px; font-weight: 600; margin-bottom: 1.5rem; color: #fff; }
+
+    /* CARD CONFIG */
+    .card { background: var(--surface); border: 1px solid var(--borda); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 1rem; color: #fff; }
+
+    /* FORMULÁRIOS */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 11px; font-weight: 600; color: var(--texto-sec); text-transform: uppercase; letter-spacing: .05em; }
+    .form-group input, .form-group select { padding: 8px 10px; border: 1px solid var(--borda); border-radius: var(--radius-md); font-size: 14px; background: #1e1e24; color: #fff; outline: none; transition: border-color .15s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--verde); }
+    .divider { border: none; border-top: 1px solid var(--borda); margin: 1rem 0; }
+
+    /* BOTÕES */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-md); font-size: 14px; font-family: inherit; cursor: pointer; border: none; transition: transform .1s; }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: var(--verde); color: #fff; }
+    .btn-primary:hover { background: var(--verde-dark); }
+    .btn-danger-sm { background: none; border: none; color: var(--perigo); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: var(--radius-md); }
+    .btn-danger-sm:hover { background: rgba(239, 68, 108, 0.1); }
+
+    /* BADGES & CARDS DE ATIVO */
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+    .badge-renda_fixa { background: #142821; color: #1d9e75; }
+    .badge-acao       { background: #132235; color: #3b82f6; }
+    .badge-fundo      { background: #281e13; color: #f59e0b; }
+
+    .ativo-card { background: var(--surface); border: 1px solid var(--borda); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; }
+    .ativo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .ativo-nome { font-weight: 600; font-size: 15px; color: #fff; }
+    .ativo-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--borda); color: var(--texto-sec); font-size: 13px; }
+    .ativo-row:last-child { border-bottom: none; }
+    .ativo-row span:last-child { color: var(--texto); font-weight: 500; }
+
+    .empty { text-align: center; padding: 2.5rem; color: var(--texto-ter); }
+    .check-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; border: 1px solid var(--borda); border-radius: var(--radius-md); background: var(--bg); }
+    .check-item { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--surface); border: 1px solid var(--borda); border-radius: 20px; font-size: 13px; cursor: pointer; }
+
+    /* RESULTADO & CONTAINER DE GRÁFICO */
+    .result-box { background: var(--surface); border: 1px solid var(--borda); border-radius: var(--radius-lg); padding: 1.5rem; margin-top: 1rem; }
+    .result-title { font-size: 13px; font-weight: 600; color: var(--texto-sec); text-transform: uppercase; margin-bottom: 1rem; }
+
+    .output-pre {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      background: #000;
+      border: 1px solid var(--borda);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      color: var(--verde);
+      overflow-x: auto;
+    }
+
+    .erro-msg { font-size: 12px; color: var(--perigo); margin-top: 8px; display: none; }
+    .chart-wrapper { position: relative; height: 320px; width: 100%; margin-top: 15px; display: flex; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo"><i class="ti ti-currency-dollar"></i></div>
+  <div class="header-text">
+    <h1>FinScript</h1>
+    <p>Simulador de Portfólios Financeiros </p>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="nav-label">Menu</div>
+    <button class="nav-btn active" onclick="mudarPagina('ativos', this)"><i class="ti ti-building-bank"></i> Ativos</button>
+    <button class="nav-btn" onclick="mudarPagina('portfolios', this)"><i class="ti ti-briefcase"></i> Portfólios</button>
+    <button class="nav-btn" onclick="mudarPagina('simular', this)"><i class="ti ti-chart-line"></i> Simular</button>
+    <button class="nav-btn" onclick="mudarPagina('comparar', this)"><i class="ti ti-scale"></i> Comparar</button>
+    <button class="nav-btn" onclick="mudarPagina('informativo', this)"><i class="ti ti-help-circle"></i> Informativo</button>
+
+    <div class="nav-label" style="margin-top:1rem;">Dados</div>
+    <button class="nav-btn" onclick="exportarDados()"><i class="ti ti-download"></i> Exportar</button>
+    <button class="nav-btn" onclick="document.getElementById('input-importar').click()"><i class="ti ti-upload"></i> Importar</button>
+    <input type="file" id="input-importar" accept=".json" style="display:none" onchange="importarDados(event)">
+  </nav>
+
+  <main class="main">
+    <div id="page-ativos" class="page active">
+      <div class="page-title">Cadastro de Ativos</div>
+      <div class="card">
+        <div class="card-title">Novo ativo</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nome do ativo</label><input type="text" id="a-nome" placeholder="ex: cdb_itau" /></div>
+          <div class="form-group">
+            <label>Tipo</label>
+            <select id="a-tipo" onchange="atualizarCamposAtivo()">
+              <option value="renda_fixa">Renda fixa</option>
+              <option value="acao">Ação</option>
+              <option value="fundo">Fundo</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Quantidade (unidades)</label><input type="number" id="a-qtd" value="1" /></div>
+          <div class="form-group"><label>Preço médio (R$)</label><input type="number" id="a-preco" placeholder="1000.00" /></div>
+          <div class="form-group" style="grid-column: 1 / -1;"><label style="color: var(--verde);">Aporte Mensal Reinvestido (R$) — Opcional</label><input type="number" id="a-aporte" value="0" /></div>
+        </div>
+        <hr class="divider" />
+        <div class="form-grid" id="campos-opcionais">
+          <div class="form-group" id="campo-taxa"><label>Taxa (%)</label><input type="number" id="a-taxa" placeholder="110" /></div>
+          <div class="form-group" id="campo-indexador">
+            <label>Indexador</label>
+            <select id="a-indexador"><option value="CDI">CDI</option><option value="SELIC">SELIC</option><option value="IPCA">IPCA</option><option value="prefixado">Prefixado</option></select>
+          </div>
+          <div class="form-group" id="campo-vencimento"><label>Vencimento</label><input type="text" id="a-venc" placeholder="dd/mm/aaaa" /></div>
+        </div>
+        <div style="margin-top:1.25rem;"><button class="btn btn-primary" onclick="adicionarAtivo()"><i class="ti ti-plus"></i> Adicionar ativo</button></div>
+        <div class="erro-msg" id="erro-ativo"></div>
+      </div>
+      <div id="lista-ativos"></div>
+    </div>
+
+    <div id="page-portfolios" class="page">
+      <div class="page-title">Portfólios</div>
+      <div class="card">
+        <div class="card-title">Novo portfólio</div>
+        <div class="form-group" style="margin-bottom:12px"><label>Nome do portfólio</label><input type="text" id="p-nome" placeholder="ex: carteira_conservadora" /></div>
+        <div class="form-group"><label>Selecionar ativos componentes</label><div class="check-grid" id="check-ativos"></div></div>
+        <div style="margin-top:1.25rem;"><button class="btn btn-primary" onclick="adicionarPortfolio()"><i class="ti ti-plus"></i> Criar portfólio</button></div>
+        <div class="erro-msg" id="erro-port"></div>
+      </div>
+      <div id="lista-portfolios"></div>
+    </div>
+
+    <div id="page-simular" class="page">
+      <div class="page-title">Simulação Histórica</div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group"><label>Portfólio</label><select id="s-portfolio"></select></div>
+          <div class="form-group"><label>Período (meses)</label><input type="number" id="s-meses" value="24" /></div>
+        </div>
+        <div style="margin-top:1.25rem;"><button class="btn btn-primary" id="btn-simular" onclick="executarSimulacao()"><i class="ti ti-player-play"></i> Simular</button></div>
+        <div class="erro-msg" id="erro-sim"></div>
+      </div>
+      <div id="resultado-simulacao"></div>
+    </div>
+
+    <div id="page-comparar" class="page">
+      <div class="page-title">Comparação de Desempenho</div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="form-group"><label>Portfólio Principal (A)</label><select id="c-porta"></select></div>
+          <div class="form-group"><label>Portfólio de Confronto (B)</label><select id="c-portb"></select></div>
+          <div class="form-group" style="grid-column: 1 / -1;"><label>Período de Análise (meses)</label><input type="number" id="c-meses" value="12" disabled /></div>
+        </div>
+        <div style="margin-top:1.25rem;"><button class="btn btn-primary" id="btn-comparar" onclick="executarComparacao()"><i class="ti ti-scale"></i> Comparar</button></div>
+        <div class="erro-msg" id="erro-cmp"></div>
+      </div>
+      <div id="resultado-comparacao"></div>
+    </div>
+
+    <div id="page-informativo" class="page">
+      <div class="page-title">Documentação de Regras e Fórmulas Matemáticas</div>
+
+      <div class="card">
+        <div class="card-title" style="color: var(--verde); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-chart-arrows-vertical"></i> Taxas de Referência do Mercado (Constantes do Sistema)
+        </div>
+        <p style="font-size: 14px; color: var(--texto-sec); line-height: 1.6; margin-bottom: 12px;">
+          O interpretador financeiro FinScript utiliza taxas e parâmetros de referência macroeconômicos do mercado brasileiro para calcular a rentabilidade anualizada dos ativos de Renda Fixa:
+        </p>
+        <div class="ativo-rows">
+          <div class="ativo-row"><span>Taxa básica SELIC</span><span>10,75% ao ano</span></div>
+          <div class="ativo-row"><span>Taxa de referência CDI</span><span>10,65% ao ano</span></div>
+          <div class="ativo-row"><span>Índice de inflação IPCA</span><span>4,83% ao ano</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color: var(--azul); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-trending-up"></i> Projeções de Renda Variável (Ações e Fundos)
+        </div>
+        <p style="font-size: 14px; color: var(--texto-sec); line-height: 1.6; margin-bottom: 12px;">
+          Devido à volatilidade diária característica da renda variável, o interpretador adota médias fixas com base em estimativas de mercado para projeções patrimoniais estáveis de longo prazo:
+        </p>
+        <div class="ativo-rows">
+          <div class="ativo-row"><span>Ações (Renda Variável Geral)</span><span>Taxa fixa de 12,00% ao ano</span></div>
+          <div class="ativo-row"><span>Fundos de Investimento (Padrão)</span><span>Taxa de 9,00% ao ano (ou taxa contratada pelo usuário)</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color: var(--alerta); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-math-function"></i> Fórmula de Capitalização e Aportes Periódicos
+        </div>
+        <p style="font-size: 14px; color: var(--texto-sec); line-height: 1.6; margin-bottom: 10px;">
+          Para projetar o saldo acumulado considerando o montante inicial adicionado de depósitos recorrentes mensais, o interpretador resolve a equação de **Valor Futuro de uma Anuidade** sob juros compostos:
+        </p>
+        <pre class="output-pre" style="color: #fff; font-size: 12px; margin-bottom: 10px; text-align: center; background: #050505;">VF = [ VI * (1 + i)^n ] + [ Aporte * (((1 + i)^n - 1) / i) ]</pre>
+        <div style="font-size: 13px; color: var(--texto-sec); line-height: 1.5; padding-left: 10px;">
+          • <strong>VI:</strong> Valor Inicial investido (Quantidade × Preço Médio).<br>
+          • <strong>Aporte:</strong> Valor recorrente depositado todo mês (Fase 2).<br>
+          • <strong>i:</strong> Taxa mensal efetiva equivalente: <code>i = (1 + TaxaAnual/100)^(1/12) - 1</code>.<br>
+          • <strong>n:</strong> Número de meses totais do período de simulação.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color: var(--perigo); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-receipt-tax"></i> Tabela Regressiva de Imposto de Renda (IR)
+        </div>
+        <p style="font-size: 14px; color: var(--texto-sec); line-height: 1.6; margin-bottom: 12px;">
+          Conforme a legislação brasileira da Receita Federal, os rendimentos reais provenientes exclusivamente de ativos da categoria de <strong>Renda Fixa</strong> sofrem tributação retida na fonte com base no prazo de resgate (simulado no encerramento):
+        </p>
+        <div class="ativo-rows">
+          <div class="ativo-row"><span>Simulações de até 6 meses</span><span style="color: var(--perigo)">Alíquota de 22,5% cobrada sobre o lucro</span></div>
+          <div class="ativo-row"><span>Simulações de 7 a 12 meses</span><span style="color: var(--perigo)">Alíquota de 20,0% cobrada sobre o lucro</span></div>
+          <div class="ativo-row"><span>Simulações de 13 a 24 meses</span><span style="color: var(--perigo)">Alíquota de 17,5% cobrada sobre o lucro</span></div>
+          <div class="ativo-row"><span>Simulações superiores a 24 meses</span><span style="color: var(--verde)">Alíquota de 15,0% cobrada sobre o lucro</span></div>
+        </div>
+        <p style="font-size: 12px; color: var(--texto-sec); margin-top: 12px; font-style: italic;">
+          *Nota explicativa de auditoria: Como a cobrança tributária é computada no último mês, a última bolinha das curvas nos gráficos de linha reflete o ajuste imediato do saldo bruto para o valor líquido real após a retenção automática do imposto.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color: #a855f7; display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-shield-check"></i> Regras de Auditoria do Analisador Semântico
+        </div>
+        <p style="font-size: 14px; color: var(--texto-sec); line-height: 1.6; margin-bottom: 12px;">
+          O coração do compilador FinScript é o seu **Analisador Semântico** (`semantico.py`). Ele protege o investidor e valida o arquivo de entrada aplicando regras restritas de segurança:
+        </p>
+        <div class="ativo-rows">
+          <div class="ativo-row"><span>Concentração de Risco</span><span>Dispara um [AVISO SEMÂNTICO] caso um único ativo represente mais de 80% do valor do portfólio.</span></div>
+          <div class="ativo-row"><span>Detecção de Ativos Vencidos</span><span>Compara a data de vencimento da renda fixa com o relógio do sistema e avisa se o papel já expirou.</span></div>
+          <div class="ativo-row"><span>Sistema de Tipagem Rígido</span><span>Bloqueia e impede que o usuário envie indexadores (como CDI ou SELIC) para ações ou fundos.</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const BACKEND_URL = 'http://localhost:5000/compilar';
+  let ativos = [], portfolios = [], chartInstancia = null;
+
+  function exportarDados() {
+    const dados = { ativos: ativos, portfolios: portfolios };
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'finscript_dados.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importarDados(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const dados = JSON.parse(e.target.result);
+        if (!Array.isArray(dados.ativos) || !Array.isArray(dados.portfolios)) {
+          alert('Arquivo inválido: estrutura JSON não reconhecida.'); return;
+        }
+        ativos     = dados.ativos;
+        portfolios = dados.portfolios;
+        renderAtivos();
+        renderPortfolios();
+        atualizarSelects();
+        alert('Importado com sucesso! ' + ativos.length + ' ativo(s) e ' + portfolios.length + ' portfólio(s) carregados.');
+      } catch(err) {
+        alert('Erro ao ler o arquivo: ' + err.message);
+      }
+      // Limpa o input para permitir reimportar o mesmo arquivo se necessário
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function salvarNoLocalStorage() { localStorage.setItem('f_atv', JSON.stringify(ativos)); localStorage.setItem('f_prt', JSON.stringify(portfolios)); }
+  function carregarDoLocalStorage() {
+    if(localStorage.getItem('f_atv')) ativos = JSON.parse(localStorage.getItem('f_atv'));
+    if(localStorage.getItem('f_prt')) portfolios = JSON.parse(localStorage.getItem('f_prt'));
+    renderAtivos(); renderPortfolios(); atualizarSelects();
+  }
+
+  function mudarPagina(nome, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + nome).classList.add('active');
+    btn.classList.add('active');
+    atualizarSelects();
+  }
+
+  function mostrarErro(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 5000); }
+
+  function atualizarCamposAtivo() {
+    const t = document.getElementById('a-tipo').value;
+    document.getElementById('campo-taxa').style.display = t === 'acao' ? 'none' : '';
+    document.getElementById('campo-vencimento').style.display = t === 'acao' ? 'none' : '';
+    document.getElementById('campo-indexador').style.display = t !== 'renda_fixa' ? 'none' : '';
+  }
+
+  function adicionarAtivo() {
+    const nome = document.getElementById('a-nome').value.trim().replace(/\s+/g, '_');
+    const tipo = document.getElementById('a-tipo').value;
+    const qtd = parseFloat(document.getElementById('a-qtd').value);
+    const preco = parseFloat(document.getElementById('a-preco').value);
+    const aporte = parseFloat(document.getElementById('a-aporte').value) || 0;
+    const taxa = parseFloat(document.getElementById('a-taxa').value);
+    const idx = document.getElementById('a-indexador').value;
+    const venc = document.getElementById('a-venc').value.trim();
+
+    if(!nome || isNaN(qtd) || isNaN(preco)) return mostrarErro('erro-ativo', 'Campos essenciais vazios.');
+    if(nome.includes(' ')) return mostrarErro('erro-ativo', 'O nome não deve conter espaços.');
+
+    ativos.push({nome, tipo, quantidade: qtd, preco_medio: preco, aporte_mensal: aporte, taxa: tipo!=='acao'?taxa:null, indexador: tipo==='renda_fixa'?idx:null, vencimento: tipo!=='acao'?venc:null});
+    renderAtivos(); salvarNoLocalStorage();
+    ['a-nome','a-qtd','a-preco','a-aporte','a-taxa','a-venc'].forEach(id => document.getElementById(id).value = (id==='a-qtd'||id==='a-aporte')?'0':'');
+  }
+
+  function removerAtivo(nome) {
+    ativos = ativos.filter(a => a.nome !== nome);
+    portfolios.forEach(p => p.ativos = p.ativos.filter(n => n !== nome));
+    renderAtivos(); renderPortfolios(); salvarNoLocalStorage();
+  }
+
+  function renderAtivos() {
+    const el = document.getElementById('lista-ativos');
+    if (!ativos.length) { el.innerHTML = `<div class="empty"><i class="ti ti-inbox"></i><p>Nenhum ativo configurado.</p></div>`; return; }
+    el.innerHTML = ativos.map(a => `
+      <div class="ativo-card">
+        <div class="ativo-header">
+          <div><span class="ativo-nome">${a.nome}</span> <span class="badge badge-${a.tipo}">${a.tipo.replace('_',' ')}</span></div>
+          <button class="btn-danger-sm" onclick="removerAtivo('${a.nome}')"><i class="ti ti-trash"></i></button>
+        </div>
+        <div class="ativo-rows">
+          <div class="ativo-row"><span>Quantidade / Preço Médio</span><span>${a.quantidade} un. / R$ ${a.preco_medio.toFixed(2)}</span></div>
+          ${a.aporte_mensal > 0 ? `<div class="ativo-row"><span>Aporte Mensal Recorrente</span><span style="color:var(--verde)">R$ ${a.aporte_mensal.toFixed(2)}</span></div>` : ''}
+          ${a.taxa ? `<div class="ativo-row"><span>Taxa Pactuada</span><span>${a.taxa}% ${a.indexador||''}</span></div>` : ''}
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('check-ativos').innerHTML = ativos.map(a => `<label class="check-item"><input type="checkbox" value="${a.nome}" /> ${a.nome}</label>`).join('');
+  }
+
+  function adicionarPortfolio() {
+    const nome = document.getElementById('p-nome').value.trim().replace(/\s+/g, '_');
+    const sels = [...document.querySelectorAll('#check-ativos input:checked')].map(c => c.value);
+    if (!nome || !sels.length) return mostrarErro('erro-port', 'Configure o nome e selecione ativos.');
+    portfolios.push({ nome, ativos: sels });
+    renderPortfolios(); atualizarSelects(); salvarNoLocalStorage();
+    document.getElementById('p-nome').value = '';
+    document.querySelectorAll('#check-ativos input').forEach(c => c.checked = false);
+  }
+
+  function removerPortfolio(nome) { portfolios = portfolios.filter(p => p.nome !== nome); renderPortfolios(); salvarNoLocalStorage(); }
+  function renderPortfolios() {
+    const el = document.getElementById('lista-portfolios');
+    if (!portfolios.length) { el.innerHTML = `<div class="empty"><i class="ti ti-briefcase"></i><p>Nenhum portfólio estruturado.</p></div>`; return; }
+    el.innerHTML = portfolios.map(p => `
+      <div class="ativo-card">
+        <div class="ativo-header"><span class="ativo-nome">${p.nome}</span><button class="btn-danger-sm" onclick="removerPortfolio('${p.nome}')"><i class="ti ti-trash"></i></button></div>
+        <p style="font-size:12px;color:var(--texto-sec)">Componentes: ${p.ativos.join(', ')}</p>
+      </div>
+    `).join('');
+  }
+
+  function atualizarSelects() {
+    const html = portfolios.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+    ['s-portfolio','c-porta','c-portb'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = html || '<option value="">Sem portfólios</option>'; });
+  }
+
+  function gerarCodigoFinScript(portNomes, meses, comparar = false) {
+    const lines = [];
+    ativos.forEach(a => {
+      lines.push(`ativo ${a.nome} { tipo: ${a.tipo} quantidade: ${a.quantidade} preco_medio: ${a.preco_medio}`);
+      if (a.aporte_mensal > 0) lines.push(`    aporte_mensal : ${a.aporte_mensal}`);
+      if (a.taxa) lines.push(`    taxa : ${a.taxa} %`);
+      if (a.indexador) lines.push(`    indexador : ${a.indexador}`);
+      if (a.vencimento) lines.push(`    vencimento : ${a.vencimento}`);
+      lines.push(`}\n`);
+    });
+    portfolios.filter(p => portNomes.includes(p.nome)).forEach(p => {
+      lines.push(`portfolio ${p.nome} {`);
+      p.ativos.forEach(n => lines.push(`    ativo : ${n}`));
+      lines.push(`}\n`);
+    });
+    if (comparar) {
+      lines.push(`se 1 == 1 entao\n  comparar ${portNomes[0]} com ${portNomes[1]}\nfim`);
+    } else {
+      lines.push(`simular ${portNomes[0]} periodo : ${meses} meses`);
+    }
+    return lines.join('\n');
+  }
+
+  async function chamarBackend(codigo, idResultado, idBtn) {
+    const btn = document.getElementById(idBtn);
+    const divRes = document.getElementById(idResultado);
+    btn.disabled = true; divRes.innerHTML = '<i>Executando compilador...</i>';
+
+    try {
+      const resp = await fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo }) });
+      const dados = await resp.json();
+      if (dados.ok) {
+        divRes.innerHTML = `<div class="result-box"><pre class="output-pre">${dados.saida}</pre></div>`;
+        if (dados.graficos && Object.keys(dados.graficos).length > 0) {
+          const k = Object.keys(dados.graficos)[0];
+          const tipoGrafico = dados.graficos[k].tipo || "line";
+          divRes.innerHTML += `<div class="result-box"><div class="chart-wrapper"><canvas id="canvas-${idResultado}"></canvas></div></div>`;
+          desenharGrafico(`canvas-${idResultado}`, dados.graficos, tipoGrafico);
+        }
+      } else {
+        divRes.innerHTML = `<div class="result-box" style="border-color:var(--perigo)"><pre class="output-pre" style="color:var(--perigo)">${dados.erro}</pre></div>`;
+      }
+    } catch (err) { divRes.innerHTML = '<p style="color:var(--perigo)">Erro na conexão com a API.</p>'; }
+    finally { btn.disabled = false; }
+  }
+
+  function desenharGrafico(idCanvas, dados, tipo) {
+    if (chartInstancia) chartInstancia.destroy();
+    const ctx = document.getElementById(idCanvas).getContext('2d');
+
+    if (tipo === "pie" || dados.comparacao) {
+      const g = dados.comparacao;
+      chartInstancia = new Chart(ctx, {
+        type: 'pie',
+        data: { labels: g.labels, datasets: [{ data: g.data, backgroundColor: ['#1D9E75', '#3b82f6'], borderColor: '#16161a', borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    } else {
+      const k = Object.keys(dados)[0];
+      chartInstancia = new Chart(ctx, {
+        type: 'line',
+        data: { labels: dados[k].labels, datasets: [{ label: k.toUpperCase(), data: dados[k].data, borderColor: '#1D9E75', tension: 0.2, fill: false }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#26262b' } }, y: { grid: { color: '#26262b' } } } }
+      });
+    }
+  }
+
+  function executarSimulacao() { chamarBackend(gerarCodigoFinScript([document.getElementById('s-portfolio').value], document.getElementById('s-meses').value, false), 'resultado-simulacao', 'btn-simular'); }
+  function executarComparacao() { chamarBackend(gerarCodigoFinScript([document.getElementById('c-porta').value, document.getElementById('c-portb').value], 12, true), 'resultado-comparacao', 'btn-comparar'); }
+
+  document.getElementById('a-venc').addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8);
+    if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
+    else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+    e.target.value = v;
+  });
+
+  renderAtivos();
+  renderPortfolios();
+  atualizarSelects();
+  atualizarCamposAtivo();
+</script>
+</body>
+</html>
