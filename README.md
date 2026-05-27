@@ -133,7 +133,7 @@ Requisitos: Python 3.8 ou superior.
 3. Abrir o frontend:
    Abra o arquivo interface.html em qualquer navegador moderno.
    O backend precisa estar rodando para as simulações funcionarem.
-
+4. Importe o Ativos-Portifolio com os ativos/portifolios que foram préviamente cadastrados, apenas para testar.
 ---
 
 ## Validações Semânticas
